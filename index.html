@@ -1,0 +1,148 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Disaster Response Coordination Portal</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      color: #172033;
+    }
+    header { background: #7f1d1d; color: white; padding: 24px; }
+    header h1 { margin: 0 0 8px; font-size: 26px; }
+    header p { margin: 0; }
+    main { max-width: 1200px; margin: auto; padding: 20px; }
+    .notice { background: #fee2e2; border-left: 5px solid #dc2626;
+      color: #991b1b; padding: 14px; margin-bottom: 18px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px; margin-bottom: 22px; }
+    .card, section { background: white; border-radius: 10px;
+      padding: 18px; box-shadow: 0 2px 8px #0000000d; }
+    .card strong { display: block; font-size: 28px; margin-top: 8px; }
+    h2 { margin-top: 0; }
+    section { margin-bottom: 22px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; }
+    th, td { padding: 11px; border-bottom: 1px solid #e2e8f0;
+      text-align: left; }
+    th { background: #f8fafc; }
+    .high { color: #b91c1c; font-weight: bold; }
+    .medium { color: #b45309; font-weight: bold; }
+    .resolved { color: #15803d; font-weight: bold; }
+    .centre { border: 1px solid #e2e8f0; padding: 14px;
+      border-radius: 8px; margin: 12px 0; }
+    .bar { height: 10px; background: #e2e8f0; border-radius: 6px; }
+    .bar span { display: block; height: 100%; background: #2563eb;
+      border-radius: 6px; }
+    footer { text-align: center; padding: 20px; color: #64748b; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Disaster Response & Emergency Resource Coordination</h1>
+  <p>District emergency operations dashboard | SIMULATED DATA</p>
+</header>
+
+<main>
+  <div id="alerts" aria-live="polite"></div>
+
+  <div class="cards">
+    <div class="card">Total incidents<strong id="total">5</strong></div>
+    <div class="card">Open incidents<strong id="open">4</strong></div>
+    <div class="card">Resolved incidents<strong id="resolved">1</strong></div>
+    <div class="card">Evacuation centres<strong>3</strong></div>
+  </div>
+
+  <section>
+    <h2>Incident monitoring</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Incident ID</th><th>Affected location</th>
+          <th>Category</th><th>Severity</th><th>Reported time</th>
+          <th>Response team</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="incidentRows"></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Evacuation centres and relief supplies</h2>
+    <div id="centres"></div>
+  </section>
+</main>
+
+<footer>District Disaster Management Authority | Demonstration portal</footer>
+
+<script>
+const incidents = [
+  {id:"INC-101",location:"North River Ward",category:"Flood",severity:"Critical",
+   time:"08:10",team:"Rescue Team Alpha",status:"Open"},
+  {id:"INC-102",location:"East Bridge Road",category:"Road blockage",severity:"High",
+   time:"08:25",team:"Rescue Team Bravo",status:"Open"},
+  {id:"INC-103",location:"Market Street",category:"Building damage",severity:"High",
+   time:"08:40",team:"Rescue Team Charlie",status:"Open"},
+  {id:"INC-104",location:"South Lake Area",category:"Flood",severity:"Medium",
+   time:"09:05",team:"Rescue Team Delta",status:"Open"},
+  {id:"INC-105",location:"Central School",category:"Medical assistance",severity:"Low",
+   time:"07:30",team:"Medical Team Echo",status:"Resolved"}
+];
+
+const centres = [
+  {name:"Central Relief Camp",location:"Central School",
+   occupancy:96,capacity:500,supplies:"Rice: 20 packs; Water: 15 boxes"},
+  {name:"North Evacuation Centre",location:"North Ward",
+   occupancy:72,capacity:300,supplies:"Rice: 80 packs; Water: 65 boxes"},
+  {name:"South Community Hall",location:"South Ward",
+   occupancy:48,capacity:250,supplies:"Rice: 45 packs; Water: 35 boxes"}
+];
+
+function renderDashboard() {
+  document.getElementById("total").textContent = incidents.length;
+  document.getElementById("open").textContent =
+    incidents.filter(i => i.status === "Open").length;
+  document.getElementById("resolved").textContent =
+    incidents.filter(i => i.status === "Resolved").length;
+
+  document.getElementById("incidentRows").innerHTML = incidents.map(i => `
+    <tr>
+      <td>${i.id}</td>
+      <td>${i.location}</td>
+      <td>${i.category}</td>
+      <td class="${i.severity === "Critical" || i.severity === "High" ? "high" : "medium"}">${i.severity}</td>
+      <td>${i.time}</td>
+      <td>${i.team}</td>
+      <td class="${i.status === "Resolved" ? "resolved" : ""}">${i.status}</td>
+    </tr>
+  `).join("");
+
+  document.getElementById("centres").innerHTML = centres.map(c => {
+    const percentage = Math.round(c.occupancy);
+    return `
+      <div class="centre">
+        <h3>${c.name}</h3>
+        <p>Location: ${c.location}</p>
+        <p>Occupancy: ${percentage}% | Capacity: ${c.capacity}</p>
+        <div class="bar"><span style="width:${percentage}%"></span></div>
+        <p>Relief supplies: ${c.supplies}</p>
+        ${percentage > 90
+          ? `<p class="high">CRITICAL: Occupancy exceeds 90%.</p>` : ""}
+      </div>`;
+  }).join("");
+
+  const critical = centres.filter(c => c.occupancy > 90);
+  document.getElementById("alerts").innerHTML = critical.map(c =>
+    `<div class="notice"><strong>CRITICAL ALERT:</strong> ${c.name}
+    occupancy is ${c.occupancy}%. Arrange overflow capacity and relief support.</div>`
+  ).join("");
+}
+
+renderDashboard();
+</script>
+</body>
+</html>
